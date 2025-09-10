@@ -4,30 +4,32 @@ import requests
 from PIL import Image
 from transformers import Blip2Processor, Blip2ForConditionalGeneration #Blip2 models
 
-# Load the pretrained processor and model
+# Load the pretrained BLIP-2 processor and model from Hugging Face
 processor = Blip2Processor.from_pretrained("Salesforce/blip2-opt-2.7b")
 model = Blip2ForConditionalGeneration.from_pretrained("Salesforce/blip2-opt-2.7b")
 
-# Specify the directory where your images are
+# Specify the directory containing the images
 image_dir = "/home/tiago/Imagens"
-image_exts = ["jpg", "jpeg", "png"]  # specify the image file extensions to search for
+# List of image file extensions to look for
+image_exts = ["jpg", "jpeg", "png"]
 
-# Open a file to write the captions
+# Open a text file to write the generated captions
 with open("captions.txt", "w") as caption_file:
-    # Iterate over each image file in the directory
+    # Loop through each image extension
     for image_ext in image_exts:
+        # Find all image files in the directory with the current extension
         for img_path in glob.glob(os.path.join(image_dir, f"*.{image_ext}")):
-            # Load your image
+            # Open the image and convert it to RGB format
             raw_image = Image.open(img_path).convert('RGB')
 
-            # You do not need a question for image captioning
+            # Preprocess the image for the model
             inputs = processor(raw_image, return_tensors="pt")
 
-            # Generate a caption for the image
+            # Generate a caption for the image using the model
             out = model.generate(**inputs, max_new_tokens=50)
 
-            # Decode the generated tokens to text
+            # Decode the generated output tokens to a human-readable string
             caption = processor.decode(out[0], skip_special_tokens=True)
 
-            # Write the caption to the file, prepended by the image file name
+            # Write the image filename and its caption to the output file
             caption_file.write(f"{os.path.basename(img_path)}: {caption}\n")
